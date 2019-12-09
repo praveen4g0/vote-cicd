@@ -67,13 +67,13 @@ demo.setup() {
   }
 
   info "Apply pipeline tasks"
-  oc apply -f 03-tasks/
+  OC apply -f 03-tasks/
 
   info "Applying resources"
   OC apply -f 02-pipelineresources/
 
   info "Applying pipeline"
-  oc apply -f 04-pipelines/01-build-deploy-pipeline.yaml
+  OC apply -f 04-pipelines/01-build-deploy-pipeline.yaml
 
   echo -e "\nPipeline"
   echo "==============="
@@ -100,7 +100,7 @@ demo.run-ui() {
 
 demo.url() {
   echo "Click following URL to access the application"
-  oc -n $NAMESPACE get route vote-cicd-eventlistener --template='http://{{.spec.host}}'
+  OC get route vote-cicd-eventlistener --template='http://{{.spec.host}}'
 }
 
 demo.setup-triggers() {
@@ -125,13 +125,13 @@ demo.help() {
 		USAGE:
 		  demo [command]
 		COMMANDS:
-		  setup     setups project, tasks, pipeline and resources
-		  run-api   starts pipeline api
-          run-ui    starts pipelines ui
-          setup-triggers setups RBAC, trigger template, trigger binding, event listener, route, Creates webhook Task which automatically configures webhook url to git
-          run-triggers   Create Pipeline Resources, pipeline Runs on git event  
-		  logs      show logs of last pipelinerun
-		  url       provide the url of the application
+		  setup          setups project, tasks, pipeline and resources
+		  run-api        starts pipeline api
+                  run-ui         starts pipelines ui
+                  setup-triggers setups RBAC, trigger template, trigger binding, event listener, route, Creates webhook Task which automatically configures webhook url to git
+                  run-triggers   Create Pipeline Resources, pipeline Runs on git event  
+		  logs           show logs of last pipelinerun
+		  url            provide the url of the application
 EOF
 
 }
