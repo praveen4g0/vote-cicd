@@ -1,0 +1,152 @@
+#!/usr/bin/env bash
+set -e -u -o pipefail
+
+declare -r SCRIPT_DIR=$(cd -P $(dirname $0) && pwd)
+
+declare -r NAMESPACE=${NAMESPACE:-vote-cicd}
+
+_log() {
+    local level=$1; shift
+    echo -e "$level: $@"
+}
+
+
+log.err() {
+    _log "ERROR" "$@" >&2
+}
+
+info() {
+    _log "\nINFO" "$@"
+}
+
+err() {
+    local code=$1; shift
+    local msg="$@"; shift
+    log.err $msg
+    exit $code
+}
+
+valid_command() {
+  local fn=$1; shift
+  [[ $(type -t "$fn") == "function" ]]
+}
+
+execute() {
+  echo "Running:  '$@'"
+  ${DRY_RUN:-false} || "$@"
+}
+
+# helpers to avoid adding -n $NAMESPACE to oc and tkn
+OC() {
+  echo oc -n ${NAMESPACE} "$@"
+  oc -n ${NAMESPACE} "$@"
+}
+
+TKN() {
+ echo tkn -n ${NAMESPACE} "$@"
+ tkn -n ${NAMESPACE} "$@"
+}
+
+demo.validate() {
+  info "validating tools"
+
+  tkn version >/dev/null 2>&1 || err 1 "no tkn binary found"
+  oc version >/dev/null 2>&1 || err 1 "no oc binary found"
+  return 0
+}
+
+declare -r TASKS_DIR=tmp/tasks
+
+demo.setup() {
+  demo.validate
+
+
+  info "ensure namespace $NAMESPACE exists"
+  OC get ns "$NAMESPACE" 2>/dev/null  || {
+    OC new-project $NAMESPACE
+  }
+
+  info "Apply pipeline tasks"
+  oc apply -f 03-tasks/
+
+  info "Applying resources"
+  OC apply -f 02-pipelineresources/
+
+  info "Applying pipeline"
+  oc apply -f 04-pipelines/01-build-deploy-pipeline.yaml
+
+  echo -e "\nPipeline"
+  echo "==============="
+  TKN p desc build-and-deploy
+}
+
+demo.logs() {
+  TKN pipeline logs build-and-deploy --last -f
+}
+
+demo.run-api() {
+  TKN pipeline start build-and-deploy \
+    -r my-source-repo=vote-api-repo \
+    -r my-image-resource=vote-api-image 
+}
+
+demo.run-ui() {
+  TKN pipeline start build-and-deploy \
+    -r my-source-repo=vote-ui-repo \
+    -r my-image-resource=vote-ui-image 
+
+  sleep 5  
+}
+
+demo.url() {
+  echo "Click following URL to access the application"
+  oc -n $NAMESPACE get route vote-cicd-eventlistener --template='http://{{.spec.host}}'
+}
+
+demo.setup-triggers() {
+  OC apply -f 07-github-webhooks/
+
+  echo ::::::::::::::::::::SETTING-UP-PIPELINE-TRIGGERS::::::::::::::::::::::::::
+  OC apply -f 06-pipeline-triggers/
+
+  echo ::::::::::::::::::::::::::::::WEBHOOKURL:::::::::::::::::::::::
+  echo "URL: $(oc -n $NAMESPACE get route vote-cicd-eventlistener --template='http://{{.spec.host}}')"
+  sleep 2
+}
+
+demo.run-triggers(){
+     OC apply -f 08-github-webhook-taskRuns/
+     sleep 2 
+     tkn pr ls -n vote-cicd
+}
+
+demo.help() {
+  cat <<-EOF
+		USAGE:
+		  demo [command]
+		COMMANDS:
+		  setup     setups project, tasks, pipeline and resources
+		  run-api   starts pipeline api
+          run-ui    starts pipelines ui
+          setup-triggers setups RBAC, trigger template, trigger binding, event listener, route, Creates webhook Task which automatically configures webhook url to git
+          run-triggers   Create Pipeline Resources, pipeline Runs on git event  
+		  logs      show logs of last pipelinerun
+		  url       provide the url of the application
+EOF
+
+}
+
+
+main() {
+  local fn="demo.${1:-help}"
+  valid_command "$fn" || {
+    demo.help
+    err  1 "invalid command '$1'"
+  }
+
+  cd $SCRIPT_DIR
+  $fn "$@"
+  return $?
+}
+
+main "$@"
