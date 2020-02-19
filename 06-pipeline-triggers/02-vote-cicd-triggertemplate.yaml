@@ -44,7 +44,6 @@ spec:
     spec:
       pipelineRef:
         name: build-and-deploy
-      serviceAccount: 'pipeline'
       resources:
       - name: my-source-repo
         resourceRef:

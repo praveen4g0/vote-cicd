@@ -5,7 +5,8 @@ metadata:
 spec:
   serviceAccountName: tekton-triggers-sa
   triggers:
-  - binding:
-      name: vote-cicd-pipelinebinding
-    template:
-      name: vote-cicd-triggertemplate
+    - name: vote-cicd-trig
+      bindings:
+      - name: vote-cicd-pipelinebinding
+      template:
+        name: vote-cicd-triggertemplate

@@ -1,0 +1,20 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: EventListener
+metadata:
+  name: votecicd-listener
+spec:
+  serviceAccountName: tekton-triggers-sa
+  triggers:
+    - name: vote-cicd-trig
+      interceptors:
+        - github:
+            secretRef:
+              secretName: webhook-secret
+              secretKey: secret
+            eventTypes:
+              - pull_request
+      bindings:
+        - name: pipeline-binding
+      template:
+        name: pipeline-template

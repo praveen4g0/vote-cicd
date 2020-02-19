@@ -20,6 +20,6 @@ spec:
     - name: GitHubSecretStringKey
       value: secret
     - name: ExternalDomain
-      value: http://vote-cicd-eventlistener-vote-cicd.apps.ci-ln-b674rdk-d5d6b.origin-ci-int-aws.dev.rhcloud.com
+      value: http://{{ExternalDomain}}
   timeout: 1000s
-  serviceAccount: tekton-triggers-createwebhook
+  serviceAccountName: tekton-triggers-createwebhook
