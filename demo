@@ -99,7 +99,7 @@ demo.run-ui() {
 }
 
 demo.url() {
-  echo "Click following URL to access the application"
+  echo "Click following URL to access the event-listener"
   OC get route el-votecicd-listener --template='http://{{.spec.host}}'
 }
 
@@ -133,11 +133,11 @@ demo.help() {
 		COMMANDS:
 		  setup             setups project, tasks, pipeline and resources
 		  run-api           starts pipeline api
-      run-ui            starts pipelines ui
-      setup-triggers    setups RBAC, trigger template, trigger binding, event listener, route, Creates webhook Task which automatically configures webhook url to git
-      configure-webhook configures webhook to repositroy
+                  run-ui            starts pipelines ui
+                  setup-triggers    setups RBAC, trigger template, trigger binding, event listener, route, Creates webhook Task which automatically configures webhook url to git
+        	  configure-webhook configures webhook to repositroy
 		  logs              show logs of last pipelinerun
-		  url               provide the url of the application
+		  url               provide the url of the event-listener
 EOF
 
 }
